@@ -749,7 +749,7 @@
         </div>
       </div>
 
-      <form id="applicationForm">
+      <form id="applicationForm" action="https://formspree.io/f/xojoweap" method="POST">
         <div class="form-grid">
 
           <!-- COLONNE GAUCHE -->
@@ -926,22 +926,79 @@
   </footer>
 
   <script>
-    // Agence précédente
-    document.querySelectorAll('input[name="agence_prec"]').forEach(el => {
-      el.addEventListener('change', () => {
-        const d = document.getElementById('agDetail');
-        d.classList.toggle('visible', el.value === 'oui' && el.checked);
-      });
-    });
+    document.addEventListener('DOMContentLoaded', function() {
 
-    // Soumission
-    document.getElementById('applicationForm').addEventListener('submit', e => {
-      e.preventDefault();
-      document.getElementById('applicationForm').style.display = 'none';
-      const s = document.getElementById('successMsg');
-      s.classList.add('visible');
-      document.getElementById('candidature').scrollIntoView({ behavior: 'smooth' });
+      // Agence précédente — champ conditionnel
+      document.querySelectorAll('input[name="agence_prec"]').forEach(function(el) {
+        el.addEventListener('change', function() {
+          var d = document.getElementById('agDetail');
+          if (el.value === 'oui' && el.checked) {
+            d.classList.add('visible');
+          } else {
+            d.classList.remove('visible');
+          }
+        });
+      });
+
+      // Soumission
+      document.getElementById('applicationForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        var btn = document.querySelector('.btn-submit');
+        btn.textContent = 'Envoi en cours...';
+        btn.disabled = true;
+
+        var payload = {};
+
+        // Champs simples
+        document.querySelectorAll('#applicationForm input:not([type=radio]):not([type=checkbox]), #applicationForm textarea').forEach(function(el) {
+          if (el.name) payload[el.name] = el.value;
+        });
+
+        // Radios
+        document.querySelectorAll('#applicationForm input[type=radio]:checked').forEach(function(el) {
+          payload[el.name] = el.value;
+        });
+
+        // Checkboxes contenu
+        var contenus = [];
+        document.querySelectorAll('#applicationForm input[name="contenu"]:checked').forEach(function(el) {
+          contenus.push(el.value);
+        });
+        payload['contenu'] = contenus.join(', ');
+
+        // Checkboxes engagement
+        payload['majeur'] = document.getElementById('majeur').checked ? 'Oui' : 'Non';
+        payload['contact'] = document.getElementById('contact').checked ? 'Oui' : 'Non';
+
+        fetch('https://formspree.io/f/xojoweap', {
+          method: 'POST',
+          body: JSON.stringify(payload),
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          }
+        }).then(function(res) {
+          if (res.ok) {
+            document.getElementById('applicationForm').style.display = 'none';
+            document.getElementById('successMsg').classList.add('visible');
+            document.getElementById('candidature').scrollIntoView({ behavior: 'smooth' });
+          } else {
+            btn.textContent = 'Envoyer ma candidature';
+            btn.disabled = false;
+            alert('Erreur lors de l envoi. Reessaie.');
+          }
+        }).catch(function() {
+          btn.textContent = 'Envoyer ma candidature';
+          btn.disabled = false;
+          alert('Connexion impossible. Verifie ta connexion internet.');
+        });
+      });
+
     });
+  </script>
+
+</body>
+</html>
   </script>
 
 </body>
